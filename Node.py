@@ -103,46 +103,6 @@ class Node:
                 self.score = curr_score
                 self.split = x[r]
 
-    def weighted_qauntile_sketch(self, var_idx):
-        '''
-        XGBOOST Mini-Version
-        Yiyang "Joe" Zeng
-        Is an approximation to the eact greedy approach faster for bigger datasets wher it is not feasible
-        to calculate the gain at every split point. Uses equation (8) and (9) from "XGBoost: A Scalable Tree Boosting System"
-        '''
-        x = self.x[self.idxs, var_idx]
-        hessian_ = self.hessian[self.idxs]
-        df = pandas.DataFrame({'feature': x, 'hess': hessian_})
-
-        df.sort_values(by=['feature'], ascending=True, inplace=True)
-        hess_sum = df['hess'].sum()
-        df['rank'] = df.apply(lambda x: (
-            1/hess_sum)*sum(df[df['feature'] < x['feature']]['hess']), axis=1)
-
-        for row in range(df.shape[0]-1):
-            # look at the current rank and the next ran
-            rk_sk_j, rk_sk_j_1 = df['rank'].iloc[row:row+2]
-            diff = abs(rk_sk_j - rk_sk_j_1)
-            if (diff >= self.eps):
-                continue
-
-            split_value = (df['rank'].iloc[row+1] + df['rank'].iloc[row])/2
-            lhs = x <= split_value
-            rhs = x > split_value
-
-            lhs_indices = numpy.nonzero(x <= split_value)[0]
-            rhs_indices = numpy.nonzero(x > split_value)[0]
-            if (rhs.sum() < self.min_leaf or lhs.sum() < self.min_leaf
-               or self.hessian[lhs_indices].sum() < self.min_child_weight
-               or self.hessian[rhs_indices].sum() < self.min_child_weight):
-                continue
-
-            curr_score = self.gain(lhs, rhs)
-            if curr_score > self.score:
-                self.var_idx = var_idx
-                self.score = curr_score
-                self.split = split_value
-
     def gain(self, lhs, rhs):
         '''
         Calculates the gain at a particular split point bases on equation (7) from
@@ -157,8 +117,7 @@ class Node:
         rhs_gradient = gradient[rhs].sum()
         rhs_hessian = hessian[rhs].sum()
 
-        gain = 0.5 * ((lhs_gradient**2/(lhs_hessian + self.lambda_)) + (rhs_gradient**2/(rhs_hessian + self.lambda_)
-                                                                        ) - ((lhs_gradient + rhs_gradient)**2/(lhs_hessian + rhs_hessian + self.lambda_))) - self.gamma
+        gain = 0.5 *((lhs_gradient**2/(lhs_hessian + self.lambda_)) + (rhs_gradient**2/(rhs_hessian + self.lambda_)) - ((lhs_gradient + rhs_gradient)**2/(lhs_hessian + rhs_hessian + self.lambda_))) - self.gamma
         return (gain)
 
     @property
