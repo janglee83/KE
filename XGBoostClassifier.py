@@ -1,5 +1,4 @@
 import numpy
-import pandas
 from math import e
 from XGBoostTree import XGBoostTree
 
