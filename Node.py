@@ -3,35 +3,6 @@ import pandas
 from math import e
 
 class Node:
-
-    '''
-    A node object that is recursivly called within itslef to construct a regression tree. Based on Tianqi Chen's XGBoost
-    the internal gain used to find the optimal split value uses both the gradient and hessian. Also a weighted quantlie sketch
-    and optimal leaf values all follow Chen's description in "XGBoost: A Scalable Tree Boosting System" the only thing not
-    implemented in this version is sparsity aware fitting or the ability to handle NA values with a default direction.
-
-    Inputs
-    ------------------------------------------------------------------------------------------------------------------
-    x: pandas datframe of the training data
-    gradient: negative gradient of the loss function
-    hessian: second order derivative of the loss function
-    idxs: used to keep track of samples within the tree structure
-    subsample_cols: is an implementation of layerwise column subsample randomizing the structure of the trees
-    (complexity parameter)
-    min_leaf: minimum number of samples for a node to be considered a node (complexity parameter)
-    min_child_weight: sum of the heassian inside a node is a meaure of purity (complexity parameter)
-    depth: limits the number of layers in the tree
-    lambda: L2 regularization term on weights. Increasing this value will make model more conservative.
-    gamma: This parameter also prevents over fitting and is present in the the calculation of the gain (structure score).
-    As this is subtracted from the gain it essentially sets a minimum gain amount to make a split in a node.
-    eps: This parameter is used in the quantile weighted skecth or 'approx' tree method roughly translates to
-    (1 / sketch_eps) number of bins
-
-    Outputs
-    --------------------------------------------------------------------------------------------------------------------
-    A single tree object that will be used for gradient boosintg.
-    '''
-
     def __init__(self, x, gradient, hessian, idxs, subsample_cols=0.8, min_leaf=5, min_child_weight=1, depth=10, lambda_=1, gamma=1, eps=0.1):
 
         self.x, self.gradient, self.hessian = x, gradient, hessian
@@ -56,7 +27,7 @@ class Node:
 
     def compute_gamma(self, gradient, hessian):
         '''
-        Calculates the optimal leaf value equation (5) in "XGBoost: A Scalable Tree Boosting System"
+        Calculates the optimal leaf value equation (5)
         '''
         return (-numpy.sum(gradient)/(numpy.sum(hessian) + self.lambda_))
 
@@ -105,8 +76,7 @@ class Node:
 
     def gain(self, lhs, rhs):
         '''
-        Calculates the gain at a particular split point bases on equation (7) from
-        "XGBoost: A Scalable Tree Boosting System"
+        Calculates the gain at a particular split point bases on equation (7)
         '''
         gradient = self.gradient[self.idxs]
         hessian = self.hessian[self.idxs]

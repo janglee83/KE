@@ -2,32 +2,6 @@ import numpy
 from XGBoostTree import XGBoostTree
 
 class XGBoostRegressor:
-    '''
-    Full application of the XGBoost algorithm as described in "XGBoost: A Scalable Tree Boosting System" for
-    regression.
-
-    Inputs
-    ------------------------------------------------------------------------------------------------------------------
-    x: pandas datframe of the training data
-    gradient: negative gradient of the loss function
-    hessian: second order derivative of the loss function
-    idxs: used to keep track of samples within the tree structure
-    subsample_cols: is an implementation of layerwise column subsample randomizing the structure of the trees
-    (complexity parameter)
-    min_leaf: minimum number of samples for a node to be considered a node (complexity parameter)
-    min_child_weight: sum of the heassian inside a node is a meaure of purity (complexity parameter)
-    depth: limits the number of layers in the tree
-    lambda: L2 regularization term on weights. Increasing this value will make model more conservative.
-    gamma: This parameter also prevents over fitting and is present in the the calculation of the gain (structure score).
-    As this is subtracted from the gain it essentially sets a minimum gain amount to make a split in a node.
-    eps: This parameter is used in the quantile weighted skecth or 'approx' tree method roughly translates to
-    (1 / sketch_eps) number of bins
-
-    Outputs
-    --------------------------------------------------------------------------------------------------------------------
-    A single tree object that will be used for gradient boosintg.
-    '''
-
     def __init__(self):
         self.estimators = []
 
@@ -60,7 +34,7 @@ class XGBoostRegressor:
         self.base_pred = numpy.full(
             (X.shape[0], 1), numpy.mean(y)).flatten().astype('float64')
 
-        for booster in range(self.boosting_rounds):
+        for _ in range(self.boosting_rounds):
             Grad = self.grad(self.base_pred, self.y)
             Hess = self.hess(self.base_pred)
             boosting_tree = XGBoostTree().fit(self.X, Grad, Hess, depth=self.depth, min_leaf=self.min_leaf, lambda_=self.lambda_,
